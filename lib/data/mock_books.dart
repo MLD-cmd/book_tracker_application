@@ -1,4 +1,3 @@
-// FILE: lib/data/mock_books.dart
 import 'package:uuid/uuid.dart';
 import '../models/book.dart';
 
