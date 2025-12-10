@@ -1,44 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/book_providers.dart';
+// FILE: lib/models/reading_session.dart
+import 'package:flutter/foundation.dart';
 
-class ReadingSessionPage extends ConsumerWidget {
+@immutable
+class ReadingSession {
   final String bookId;
-  const ReadingSessionPage({super.key, required this.bookId});
+  final DateTime startTime;
+  final int startingPage;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(readingSessionProvider);
-    final timer = ref.watch(sessionTimerProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reading Session')),
-      body: Column(
-        children: [
-          session == null
-              ? ElevatedButton(
-                  onPressed: () {
-                    ref.read(readingSessionProvider.notifier).startSession(bookId, 0);
-                  },
-                  child: const Text('Start Session'),
-                )
-              : Column(
-                  children: [
-                    timer.when(
-                      data: (duration) => Text('Time: ${duration.inMinutes}:${duration.inSeconds % 60}'),
-                      loading: () => const CircularProgressIndicator(),
-                      error: (e, _) => Text('Error: $e'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(readingSessionProvider.notifier).endSession(endPage: 10);
-                      },
-                      child: const Text('End Session'),
-                    ),
-                  ],
-                ),
-        ],
-      ),
-    );
-  }
+  const ReadingSession({
+    required this.bookId,
+    required this.startTime,
+    required this.startingPage,
+  });
 }

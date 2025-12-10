@@ -8,7 +8,9 @@ import '../services/book_repository.dart';
 
 // Providers
 final booksLibraryProvider = Provider<List<Book>>((ref) => mockBooks);
-final bookRepositoryProvider = Provider<BookRepository>((ref) => BookRepository(mockBooks));
+final bookRepositoryProvider = Provider<BookRepository>(
+  (ref) => BookRepository(mockBooks),
+);
 
 // User Library & shelves
 enum ShelfType { wantToRead, reading, finished }
@@ -18,8 +20,8 @@ class UserLibrary {
   final Set<String> favorites;
 
   UserLibrary({Map<String, ShelfType>? shelves, Set<String>? favorites})
-      : shelves = Map.unmodifiable(shelves ?? {}),
-        favorites = Set.unmodifiable(favorites ?? {});
+    : shelves = Map.unmodifiable(shelves ?? {}),
+      favorites = Set.unmodifiable(favorites ?? {});
 }
 
 class UserLibraryNotifier extends StateNotifier<UserLibrary> {
@@ -37,18 +39,27 @@ class UserLibraryNotifier extends StateNotifier<UserLibrary> {
 
   void toggleFavorite(String bookId) {
     final f = {...state.favorites};
-    if (f.contains(bookId)) f.remove(bookId); else f.add(bookId);
+    if (f.contains(bookId))
+      f.remove(bookId);
+    else
+      f.add(bookId);
     state = UserLibrary(shelves: state.shelves, favorites: f);
   }
 }
 
-final userLibraryProvider = StateNotifierProvider<UserLibraryNotifier, UserLibrary>((ref) => UserLibraryNotifier());
+final userLibraryProvider =
+    StateNotifierProvider<UserLibraryNotifier, UserLibrary>(
+      (ref) => UserLibraryNotifier(),
+    );
 
 // Shelf provider (family)
 final shelfProvider = Provider.family<List<Book>, ShelfType>((ref, shelfType) {
   final lib = ref.watch(userLibraryProvider);
   final books = ref.watch(booksLibraryProvider);
-  final ids = lib.shelves.entries.where((e) => e.value == shelfType).map((e) => e.key).toSet();
+  final ids = lib.shelves.entries
+      .where((e) => e.value == shelfType)
+      .map((e) => e.key)
+      .toSet();
   return books.where((b) => ids.contains(b.id)).toList();
 });
 
@@ -60,7 +71,11 @@ class BookProgressNotifier extends StateNotifier<Map<String, BookProgress>> {
     final pct = totalPages <= 0 ? 0.0 : (page / totalPages);
     state = {
       ...state,
-      bookId: BookProgress(currentPage: page, percentage: pct, totalPages: totalPages)
+      bookId: BookProgress(
+        currentPage: page,
+        percentage: pct,
+        totalPages: totalPages,
+      ),
     };
   }
 
@@ -70,7 +85,10 @@ class BookProgressNotifier extends StateNotifier<Map<String, BookProgress>> {
   }
 }
 
-final bookProgressProvider = StateNotifierProvider<BookProgressNotifier, Map<String, BookProgress>>((ref) => BookProgressNotifier());
+final bookProgressProvider =
+    StateNotifierProvider<BookProgressNotifier, Map<String, BookProgress>>(
+      (ref) => BookProgressNotifier(),
+    );
 
 // Reading Session
 class ReadingSessionNotifier extends StateNotifier<ReadingSession?> {
@@ -78,7 +96,11 @@ class ReadingSessionNotifier extends StateNotifier<ReadingSession?> {
   final Ref ref;
 
   void startSession(String bookId, int startingPage) {
-    state = ReadingSession(bookId: bookId, startTime: DateTime.now(), startingPage: startingPage);
+    state = ReadingSession(
+      bookId: bookId,
+      startTime: DateTime.now(),
+      startingPage: startingPage,
+    );
   }
 
   void endSession({required int endPage}) {
@@ -86,12 +108,17 @@ class ReadingSessionNotifier extends StateNotifier<ReadingSession?> {
     if (s == null) return;
     final books = ref.read(booksLibraryProvider);
     final book = books.firstWhere((b) => b.id == s.bookId);
-    ref.read(bookProgressProvider.notifier).updateProgress(s.bookId, endPage, book.pages);
+    ref
+        .read(bookProgressProvider.notifier)
+        .updateProgress(s.bookId, endPage, book.pages);
     state = null;
   }
 }
 
-final readingSessionProvider = StateNotifierProvider<ReadingSessionNotifier, ReadingSession?>((ref) => ReadingSessionNotifier(ref));
+final readingSessionProvider =
+    StateNotifierProvider<ReadingSessionNotifier, ReadingSession?>(
+      (ref) => ReadingSessionNotifier(ref),
+    );
 
 // Session Timer
 final sessionTimerProvider = StreamProvider.autoDispose<Duration>((ref) async* {
@@ -107,7 +134,7 @@ final sessionTimerProvider = StreamProvider.autoDispose<Duration>((ref) async* {
 
 // Notes Provider
 class NotesNotifier extends StateNotifier<Map<String, List<Note>>> {
-  NotesNotifier(): super({});
+  NotesNotifier() : super({});
 
   void addNote(Note n) {
     final list = [...(state[n.bookId] ?? [])]..add(n);
@@ -115,22 +142,30 @@ class NotesNotifier extends StateNotifier<Map<String, List<Note>>> {
   }
 
   void removeNote(String bookId, String noteId) {
-    final list = [...(state[bookId] ?? [])]..removeWhere(👎 => n.id == noteId);
+    final list = [...(state[bookId] ?? [])]
+      ..removeWhere((note) => note.id == noteId);
     state = {...state, bookId: list};
   }
 }
 
-final notesProvider = StateNotifierProvider<NotesNotifier, Map<String, List<Note>>>((ref) => NotesNotifier());
+final notesProvider =
+    StateNotifierProvider<NotesNotifier, Map<String, List<Note>>>(
+      (ref) => NotesNotifier(),
+    );
 
 // Search & Filters
 final searchQueryProvider = StateProvider<String>((ref) => '');
+
 class BookFilters {
   final ShelfType? shelf;
   final String? genre;
   final double? minRating;
   const BookFilters({this.shelf, this.genre, this.minRating});
 }
-final filtersProvider = StateProvider<BookFilters>((ref) => const BookFilters());
+
+final filtersProvider = StateProvider<BookFilters>(
+  (ref) => const BookFilters(),
+);
 
 // Computed filtered books
 final filteredBooksProvider = Provider<List<Book>>((ref) {
@@ -143,14 +178,25 @@ final filteredBooksProvider = Provider<List<Book>>((ref) {
 
   if (q.isNotEmpty) {
     final lower = q.toLowerCase();
-    result = result.where((b) => b.title.toLowerCase().contains(lower) || b.author.toLowerCase().contains(lower)).toList();
+    result = result
+        .where(
+          (b) =>
+              b.title.toLowerCase().contains(lower) ||
+              b.author.toLowerCase().contains(lower),
+        )
+        .toList();
   }
   if (f.shelf != null) {
-    final ids = userLib.shelves.entries.where((e) => e.value == f.shelf).map((e) => e.key).toSet();
+    final ids = userLib.shelves.entries
+        .where((e) => e.value == f.shelf)
+        .map((e) => e.key)
+        .toSet();
     result = result.where((b) => ids.contains(b.id)).toList();
   }
-  if (f.genre != null) result = result.where((b) => b.genre == f.genre).toList();
-  if (f.minRating != null) result = result.where((b) => (b.rating ?? 0) >= f.minRating!).toList();
+  if (f.genre != null)
+    result = result.where((b) => b.genre == f.genre).toList();
+  if (f.minRating != null)
+    result = result.where((b) => (b.rating ?? 0) >= f.minRating!).toList();
 
   return result;
 });
@@ -159,9 +205,14 @@ final filteredBooksProvider = Provider<List<Book>>((ref) {
 final readingStatsProvider = Provider((ref) {
   final progress = ref.watch(bookProgressProvider);
   final books = ref.watch(booksLibraryProvider);
-  final totalPagesRead = progress.values.fold<int>(0, (p, e) => p + e.currentPage);
+  final totalPagesRead = progress.values.fold<int>(
+    0,
+    (p, e) => p + e.currentPage,
+  );
   final ratings = books.map((b) => b.rating ?? 0).where((r) => r > 0).toList();
-  final avgRating = ratings.isEmpty ? 0.0 : (ratings.reduce((a, b) => a + b) / ratings.length);
+  final avgRating = ratings.isEmpty
+      ? 0.0
+      : (ratings.reduce((a, b) => a + b) / ratings.length);
 
   return {
     'booksReadThisMonth': 0,
@@ -176,18 +227,25 @@ class ReadingGoal {
   final int progress;
   ReadingGoal(this.monthlyGoal, this.progress);
 }
+
 class ReadingGoalNotifier extends StateNotifier<ReadingGoal> {
-  ReadingGoalNotifier(): super(ReadingGoal(1000, 0));
-  void addProgress(int pages) => state = ReadingGoal(state.monthlyGoal, state.progress + pages);
+  ReadingGoalNotifier() : super(ReadingGoal(1000, 0));
+  void addProgress(int pages) =>
+      state = ReadingGoal(state.monthlyGoal, state.progress + pages);
   void reset() => state = ReadingGoal(state.monthlyGoal, 0);
 }
-final readingGoalProvider = StateNotifierProvider<ReadingGoalNotifier, ReadingGoal>((ref) => ReadingGoalNotifier());
+
+final readingGoalProvider =
+    StateNotifierProvider<ReadingGoalNotifier, ReadingGoal>(
+      (ref) => ReadingGoalNotifier(),
+    );
 
 // Streak Provider
-final readingSessionHistoryProvider = Provider<List<ReadingSession>>((ref) => []);
+final readingSessionHistoryProvider = Provider<List<ReadingSession>>(
+  (ref) => [],
+);
 final streakProvider = Provider<int>((ref) {
   final sessions = ref.watch(readingSessionHistoryProvider);
   if (sessions.isEmpty) return 0;
   return 1; // stub
 });
-
