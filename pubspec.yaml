@@ -28,10 +28,10 @@ flutter:
   uses-material-design: true
 
   # --- App assets (add later when needed) ---
-  assets:
-    - assets/covers/
-    - assets/icons/
-    - assets/mock/
+  # assets:
+  #  - assets/covers/
+   # - assets/icons/
+    #- assets/mock/
 
   # fonts:
   #   - family: CustomFont

@@ -132,17 +132,17 @@ final sessionTimerProvider = StreamProvider.autoDispose<Duration>((ref) async* {
   }
 });
 
-// Notes Provider
 class NotesNotifier extends StateNotifier<Map<String, List<Note>>> {
   NotesNotifier() : super({});
 
   void addNote(Note n) {
-    final list = [...(state[n.bookId] ?? [])]..add(n);
+    // Explicitly cast the list to List<Note>
+    final List<Note> list = List<Note>.from(state[n.bookId] ?? [])..add(n);
     state = {...state, n.bookId: list};
   }
 
   void removeNote(String bookId, String noteId) {
-    final list = [...(state[bookId] ?? [])]
+    final List<Note> list = List<Note>.from(state[bookId] ?? [])
       ..removeWhere((note) => note.id == noteId);
     state = {...state, bookId: list};
   }
