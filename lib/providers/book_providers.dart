@@ -111,6 +111,18 @@ class ReadingSessionNotifier extends StateNotifier<ReadingSession?> {
     ref
         .read(bookProgressProvider.notifier)
         .updateProgress(s.bookId, endPage, book.pages);
+
+    // Add session to history
+    ref
+        .read(readingSessionHistoryProvider.notifier)
+        .addSession(
+          ReadingSession(
+            bookId: s.bookId,
+            startTime: s.startTime,
+            startingPage: s.startingPage,
+          ),
+        );
+
     state = null;
   }
 }
@@ -132,11 +144,11 @@ final sessionTimerProvider = StreamProvider.autoDispose<Duration>((ref) async* {
   }
 });
 
+// Notes
 class NotesNotifier extends StateNotifier<Map<String, List<Note>>> {
   NotesNotifier() : super({});
 
   void addNote(Note n) {
-    // Explicitly cast the list to List<Note>
     final List<Note> list = List<Note>.from(state[n.bookId] ?? [])..add(n);
     state = {...state, n.bookId: list};
   }
@@ -186,6 +198,7 @@ final filteredBooksProvider = Provider<List<Book>>((ref) {
         )
         .toList();
   }
+
   if (f.shelf != null) {
     final ids = userLib.shelves.entries
         .where((e) => e.value == f.shelf)
@@ -193,15 +206,17 @@ final filteredBooksProvider = Provider<List<Book>>((ref) {
         .toSet();
     result = result.where((b) => ids.contains(b.id)).toList();
   }
+
   if (f.genre != null)
     result = result.where((b) => b.genre == f.genre).toList();
+
   if (f.minRating != null)
     result = result.where((b) => (b.rating ?? 0) >= f.minRating!).toList();
 
   return result;
 });
 
-// Reading Stats Provider
+// Reading Stats
 final readingStatsProvider = Provider((ref) {
   final progress = ref.watch(bookProgressProvider);
   final books = ref.watch(booksLibraryProvider);
@@ -212,7 +227,7 @@ final readingStatsProvider = Provider((ref) {
   final ratings = books.map((b) => b.rating ?? 0).where((r) => r > 0).toList();
   final avgRating = ratings.isEmpty
       ? 0.0
-      : (ratings.reduce((a, b) => a + b) / ratings.length);
+      : ratings.reduce((a, b) => a + b) / ratings.length;
 
   return {
     'booksReadThisMonth': 0,
@@ -240,12 +255,119 @@ final readingGoalProvider =
       (ref) => ReadingGoalNotifier(),
     );
 
-// Streak Provider
-final readingSessionHistoryProvider = Provider<List<ReadingSession>>(
-  (ref) => [],
-);
+// --- Improved Reading Session History & Streak ---
+final readingSessionHistoryProvider =
+    StateNotifierProvider<ReadingSessionHistoryNotifier, List<ReadingSession>>(
+      (ref) => ReadingSessionHistoryNotifier(),
+    );
+
+class ReadingSessionHistoryNotifier
+    extends StateNotifier<List<ReadingSession>> {
+  ReadingSessionHistoryNotifier() : super([]);
+
+  void addSession(ReadingSession session) {
+    state = [...state, session];
+  }
+}
+
 final streakProvider = Provider<int>((ref) {
   final sessions = ref.watch(readingSessionHistoryProvider);
   if (sessions.isEmpty) return 0;
-  return 1; // stub
+
+  final sorted = [...sessions]
+    ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  int streak = 1;
+
+  for (int i = 1; i < sorted.length; i++) {
+    if (sorted[i - 1].startTime.difference(sorted[i].startTime).inDays <= 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+});
+
+// --- Analytics Provider ---
+class ReadingStatistics {
+  final int booksReadThisMonth;
+  final int booksReadThisYear;
+  final int totalPagesRead;
+  final double averageRating;
+  final Map<String, int> genreDistribution;
+
+  ReadingStatistics({
+    required this.booksReadThisMonth,
+    required this.booksReadThisYear,
+    required this.totalPagesRead,
+    required this.averageRating,
+    required this.genreDistribution,
+  });
+}
+
+final readingStatisticsProvider = Provider<ReadingStatistics>((ref) {
+  final progress = ref.watch(bookProgressProvider);
+  final books = ref.watch(booksLibraryProvider);
+
+  final now = DateTime.now();
+  final booksReadThisMonth = books
+      .where(
+        (b) => b.dateAdded.month == now.month && b.dateAdded.year == now.year,
+      )
+      .length;
+  final booksReadThisYear = books
+      .where((b) => b.dateAdded.year == now.year)
+      .length;
+  final totalPagesRead = progress.values.fold<int>(
+    0,
+    (p, e) => p + e.currentPage,
+  );
+
+  final ratings = books.map((b) => b.rating ?? 0).where((r) => r > 0).toList();
+  final avgRating = ratings.isEmpty
+      ? 0.0
+      : ratings.reduce((a, b) => a + b) / ratings.length;
+
+  final genreDistribution = <String, int>{};
+  for (var b in books) {
+    genreDistribution[b.genre] = (genreDistribution[b.genre] ?? 0) + 1;
+  }
+
+  return ReadingStatistics(
+    booksReadThisMonth: booksReadThisMonth,
+    booksReadThisYear: booksReadThisYear,
+    totalPagesRead: totalPagesRead,
+    averageRating: avgRating,
+    genreDistribution: genreDistribution,
+  );
+});
+
+// --- Sorting Provider ---
+enum SortOption { dateAdded, title, author, rating }
+
+final sortOptionProvider = StateProvider<SortOption>(
+  (ref) => SortOption.dateAdded,
+);
+
+final filteredSortedBooksProvider = Provider<List<Book>>((ref) {
+  var books = ref.watch(filteredBooksProvider);
+  final sortOption = ref.watch(sortOptionProvider);
+
+  switch (sortOption) {
+    case SortOption.dateAdded:
+      books.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+      break;
+    case SortOption.title:
+      books.sort((a, b) => a.title.compareTo(b.title));
+      break;
+    case SortOption.author:
+      books.sort((a, b) => a.author.compareTo(b.author));
+      break;
+    case SortOption.rating:
+      books.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
+      break;
+  }
+
+  return books;
 });
