@@ -44,9 +44,8 @@ class _NoteEditorState extends ConsumerState<NoteEditor> {
             _controller.clear();
           },
           child: const Text('Add Note'),
-        )
+        ),
       ],
     );
   }
 }
-
