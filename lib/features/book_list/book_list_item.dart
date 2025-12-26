@@ -10,11 +10,12 @@ class BookListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isFavorite = ref.watch(
-      userLibraryProvider.select((lib) => lib.favorites.contains(book.id)),
-    );
+    
+    final books = ref.watch(userLibraryProvider);
+    final isFavorite = books.firstWhere((b) => b.id == book.id).isFavorite;
 
     return ListTile(
+      leading: const Icon(Icons.book),
       title: Text(book.title),
       subtitle: Text('${book.author} • ${book.genre}'),
       trailing: Row(
@@ -22,18 +23,24 @@ class BookListItem extends ConsumerWidget {
         children: [
           Text(book.rating?.toStringAsFixed(1) ?? '-'),
           IconButton(
-            icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+            icon: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? Colors.red : null,
+            ),
             onPressed: () {
-              ref.read(userLibraryProvider.notifier).toggleFavorite(book.id);
+              ref
+                  .read(userLibraryProvider.notifier)
+                  .toggleFavorite(book.id);
             },
           ),
         ],
       ),
-      leading: const Icon(Icons.book),
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => BookDetailPage(book: book)),
+          MaterialPageRoute(
+            builder: (_) => BookDetailPage(book: book),
+          ),
         );
       },
     );

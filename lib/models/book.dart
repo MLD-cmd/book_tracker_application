@@ -1,7 +1,6 @@
-// FILE: lib/models/book.dart
+// lib/models/book.dart
 import 'package:flutter/foundation.dart';
-
-enum BookStatus { toRead, reading, finished }
+import '../providers/book_providers.dart';
 
 @immutable
 class Book {
@@ -14,6 +13,10 @@ class Book {
   final DateTime dateAdded;
   final double? rating;
 
+  final ShelfType shelf;
+  final bool isFavorite;
+  final List<String> tags;
+
   const Book({
     required this.id,
     required this.title,
@@ -23,6 +26,9 @@ class Book {
     this.coverUrl,
     required this.dateAdded,
     this.rating,
+    this.shelf = ShelfType.wantToRead,
+    this.isFavorite = false,
+    this.tags = const [],
   });
 
   Book copyWith({
@@ -34,6 +40,9 @@ class Book {
     String? coverUrl,
     DateTime? dateAdded,
     double? rating,
+    ShelfType? shelf,
+    bool? isFavorite,
+    List<String>? tags,
   }) {
     return Book(
       id: id ?? this.id,
@@ -44,6 +53,9 @@ class Book {
       coverUrl: coverUrl ?? this.coverUrl,
       dateAdded: dateAdded ?? this.dateAdded,
       rating: rating ?? this.rating,
+      shelf: shelf ?? this.shelf,
+      isFavorite: isFavorite ?? this.isFavorite,
+      tags: tags ?? this.tags,
     );
   }
 }
