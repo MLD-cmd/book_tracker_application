@@ -38,7 +38,7 @@ class BookListPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // 🔍 SEARCH BAR
+          //  SEARCH BAR
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(

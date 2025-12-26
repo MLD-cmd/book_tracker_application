@@ -1,4 +1,3 @@
-// FILE: lib/models/note.dart
 import 'package:flutter/foundation.dart';
 
 @immutable

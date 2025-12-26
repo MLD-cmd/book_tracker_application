@@ -1,4 +1,3 @@
-// lib/models/book.dart
 import 'package:flutter/foundation.dart';
 import '../providers/book_providers.dart';
 
