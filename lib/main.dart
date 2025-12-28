@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Main feature pages
 import 'features/book_list/book_list_page.dart';
 import 'features/book_list/book_detail/book_detail_page.dart';
 import 'features/book_list/reading_session/reading_session_page.dart';
 import 'features/book_list/analytics/analytics_page.dart';
+
+// Book model
 import 'models/book.dart';
 
+/// APP ENTRY POINT
+
 void main() {
+  // ProviderScope is required by Riverpod
   runApp(const ProviderScope(child: BookTrackerApp()));
 }
+
+/// ROOT APPLICATION WIDGET
 
 class BookTrackerApp extends StatelessWidget {
   const BookTrackerApp({super.key});
@@ -16,14 +25,18 @@ class BookTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false, // remove debug banner
       title: 'Book Tracker',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const HomeNavigator(),
+      home: const HomeNavigator(), // main navigation controller
     );
   }
 }
 
+/// HOME NAVIGATOR (BOTTOM NAV BAR)
+
+/// Controls which main page is shown
+/// using BottomNavigationBar
 class HomeNavigator extends StatefulWidget {
   const HomeNavigator({super.key});
 
@@ -32,10 +45,16 @@ class HomeNavigator extends StatefulWidget {
 }
 
 class _HomeNavigatorState extends State<HomeNavigator> {
+  // Currently selected tab index
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [BookListPage(), AnalyticsPage()];
+  // Pages displayed for each tab
+  final List<Widget> _pages = const [
+    BookListPage(), // Library tab
+    AnalyticsPage(), // Analytics tab
+  ];
 
+  /// Update selected tab
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -45,7 +64,10 @@ class _HomeNavigatorState extends State<HomeNavigator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Display selected page
       body: _pages[_selectedIndex],
+
+      // Bottom navigation bar
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
@@ -64,7 +86,12 @@ class _HomeNavigatorState extends State<HomeNavigator> {
   }
 }
 
-/// Navigation helpers (optional)
+/// NAVIGATION HELPERS (OPTIONAL)
+
+/// These functions simplify navigation
+/// across the app and avoid code duplication
+
+/// Navigate to book detail page
 void navigateToBookDetail(BuildContext context, Book book) {
   Navigator.push(
     context,
@@ -72,6 +99,7 @@ void navigateToBookDetail(BuildContext context, Book book) {
   );
 }
 
+/// Navigate to reading session page
 void navigateToReadingSession(BuildContext context, String bookId) {
   Navigator.push(
     context,
@@ -79,6 +107,7 @@ void navigateToReadingSession(BuildContext context, String bookId) {
   );
 }
 
+/// Navigate to analytics page
 void navigateToAnalytics(BuildContext context) {
   Navigator.push(
     context,

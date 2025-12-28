@@ -1,4 +1,3 @@
-// FILE: lib/services/book_repository.dart
 import '../models/book.dart';
 
 class BookRepository {
